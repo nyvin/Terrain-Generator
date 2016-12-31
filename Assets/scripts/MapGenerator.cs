@@ -20,11 +20,11 @@ public class MapGenerator : MonoBehaviour
     public SettingsOfGenerator Settings;
     public bool FilterMode;
     public Terrain[] TerrainTypes;
-
+    public MapDisplay display;
     public void GenerateMap()
     {
-        float[,] noiseMap = Noise.GenerateNoiseMap(MapWidth, MapHeight, Settings.Seed, Settings.NoiseScale, Settings.Octaves, Settings.Persistance, Settings.Lacunarity, Settings.Offset);
-        MapDisplay display = FindObjectOfType<MapDisplay>();
+        float[,] noiseMap = Noise.GenerateNoiseMap(MapWidth, MapHeight, Settings.minHeight, Settings.maxHeight, Settings.Seed, Settings.NoiseScale, Settings.Octaves, Settings.Persistance, Settings.Lacunarity, Settings.Offset);
+        
         Texture2D mapTexture = Texture2D.whiteTexture;
 
         switch (TypeOfMap)
@@ -39,7 +39,7 @@ public class MapGenerator : MonoBehaviour
                 break;
             case MapType.MeshMap:
                 mapTexture = Settings.isMeshColored ? TextureGenerator.TextureFromColorMap(MapWidth, MapHeight, GenereateColorMap(noiseMap), FilterMode) : TextureGenerator.TextureFromHeightMap(noiseMap, FilterMode);
-                display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap, Settings.MesAnimationCurve , Settings.MeshMultipler), mapTexture);
+                display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap, Settings.MesAnimationCurve , Settings.MeshMultipler, 0), mapTexture);
                 break;
         }
     }
@@ -95,6 +95,11 @@ public class MapGenerator : MonoBehaviour
 [System.Serializable]
 public struct SettingsOfGenerator
 {
+    [Range(0, 1)]
+    public float minHeight;
+    [Range(0, 1)]
+    public float maxHeight;
+
     public float NoiseScale;
     [Range(1, 10)]
     public int Octaves;

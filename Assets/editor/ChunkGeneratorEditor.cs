@@ -2,24 +2,25 @@
 using System.Collections;
 using UnityEditor;
 
-[CustomEditor(typeof (MapGenerator))]
-public class MapEditor : Editor {
+[CustomEditor(typeof(ChunkGenerator))]
+public class ChunkEditor : Editor
+{
 
     public override void OnInspectorGUI()
     {
-        MapGenerator mapGen = (MapGenerator) target;
+        ChunkGenerator mapGen = (ChunkGenerator)target;
 
         if (DrawDefaultInspector())
         {
             if (mapGen.Settings.AutoUpdate)
             {
-                mapGen.GenerateMap();
+                mapGen.DrawMapInEditor();
             }
         }
 
         if (GUILayout.Button("Generate"))
         {
-            mapGen.GenerateMap();
+            mapGen.DrawMapInEditor();
         }
     }
 }

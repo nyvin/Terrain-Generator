@@ -4,7 +4,7 @@ using System.Collections;
 
 public static class Noise
 {
-    public static float[,] GenerateNoiseMap(int mapWidth, int mapHeight, int seed, float scale, int octaves, float persistance, float lacunarity, Vector2 offset)
+    public static float[,] GenerateNoiseMap(int mapWidth, int mapHeight, float minHeight, float maxHeight, int seed, float scale, int octaves, float persistance, float lacunarity, Vector2 offset)
     {
         float[,] noiseMap = new float[mapWidth, mapHeight];
 
@@ -17,17 +17,13 @@ public static class Noise
             octaveOffsets[i] = new Vector2(offsetX, offsetY);
         }
 
-        if (scale <= 0)
-        {
-            scale = 0.0001f;
-        }
-
         float maxNoiseHeight = float.MinValue;
         float minNoiseHeight = float.MaxValue;
 
         float halfWidth = mapWidth / 2f;
         float halfHeight = mapHeight / 2f;
 
+        float heightDifference = maxHeight - minHeight;
 
         for (int y = 0; y < mapHeight; y++)
         {
@@ -66,7 +62,7 @@ public static class Noise
         {
             for (int x = 0; x < mapWidth; x++)
             {
-                noiseMap[x, y] = Mathf.InverseLerp(minNoiseHeight, maxNoiseHeight, noiseMap[x, y]);
+                noiseMap[x, y] = Mathf.InverseLerp(minNoiseHeight, maxNoiseHeight, noiseMap[x, y]) * heightDifference + minHeight;
             }
         }
 
