@@ -20,7 +20,6 @@ public class ChunkGenerator : MonoBehaviour
     public MapType TypeOfMap;
     public SettingsOfGenerator Settings;
     [Range(0, 6)] public int editorPreviewLOD;
-    public static bool FilterMode;
     public Terrain[] TerrainTypes;
     public MapDisplay display;
 
@@ -33,15 +32,15 @@ public class ChunkGenerator : MonoBehaviour
         switch (TypeOfMap)
         {
             case MapType.HeightMap:
-                mapTexture = TextureGenerator.TextureFromHeightMap(chunkData.heightMap, FilterMode);
-                display.DrawTexture(mapTexture, FilterMode);
+                mapTexture = TextureGenerator.TextureFromHeightMap(chunkData.heightMap);
+                display.DrawTexture(mapTexture);
                 break;
             case MapType.ColorMap:
-                mapTexture = TextureGenerator.TextureFromColorMap(chunkSize, chunkSize, chunkData.colorMap, FilterMode);
-                display.DrawTexture(mapTexture, FilterMode);
+                mapTexture = TextureGenerator.TextureFromColorMap(chunkSize, chunkSize, chunkData.colorMap);
+                display.DrawTexture(mapTexture);
                 break;
             case MapType.MeshMap:
-                mapTexture = Settings.isMeshColored? TextureGenerator.TextureFromColorMap(chunkSize, chunkSize, chunkData.colorMap, FilterMode) : TextureGenerator.TextureFromHeightMap(chunkData.heightMap, FilterMode);
+                mapTexture = Settings.isMeshColored? TextureGenerator.TextureFromColorMap(chunkSize, chunkSize, chunkData.colorMap) : TextureGenerator.TextureFromHeightMap(chunkData.heightMap);
                 display.DrawMesh( MeshGenerator.GenerateTerrainMesh(chunkData.heightMap, Settings.MesAnimationCurve, Settings.MeshMultipler, editorPreviewLOD), mapTexture);
                 break;
          }
@@ -109,7 +108,7 @@ public class ChunkGenerator : MonoBehaviour
 
     private ChunkData GenerateChunkData(Vector2 center)
     {
-        float[,] noiseMap = Noise.GenerateNoiseMap(chunkSize, chunkSize, Settings.minHeight, Settings.maxHeight, Settings.Seed, Settings.NoiseScale, Settings.Octaves, Settings.Persistance, Settings.Lacunarity, Settings.Offset + center);
+        float[,] noiseMap = Noise.GenerateNoiseMap(chunkSize, chunkSize, Settings.minHeight, Settings.maxHeight, Settings.Seed, Settings.NoiseScale, Settings.Octaves, Settings.Persistance, Settings.Lacunarity, Settings.Offset + center, true);
         Color[] colorMap = GenereateColorMap(noiseMap);
 
         return new ChunkData(noiseMap, colorMap);
@@ -141,9 +140,12 @@ public class ChunkGenerator : MonoBehaviour
             {
                 for (int i = 0; i < TerrainTypes.Length; i++)
                 {
-                    if (heightMap[x, y] <= TerrainTypes[i].Height)
+                    if (heightMap[x, y] >= TerrainTypes[i].Height)
                     {
                         colorMap[y * chunkSize + x] = TerrainTypes[i].Color;
+                    }
+                    else
+                    {
                         break;
                     }
                 }

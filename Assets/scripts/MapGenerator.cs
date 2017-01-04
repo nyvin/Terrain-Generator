@@ -23,22 +23,22 @@ public class MapGenerator : MonoBehaviour
     public MapDisplay display;
     public void GenerateMap()
     {
-        float[,] noiseMap = Noise.GenerateNoiseMap(MapWidth, MapHeight, Settings.minHeight, Settings.maxHeight, Settings.Seed, Settings.NoiseScale, Settings.Octaves, Settings.Persistance, Settings.Lacunarity, Settings.Offset);
+        float[,] noiseMap = Noise.GenerateNoiseMap(MapWidth, MapHeight, Settings.minHeight, Settings.maxHeight, Settings.Seed, Settings.NoiseScale, Settings.Octaves, Settings.Persistance, Settings.Lacunarity, Settings.Offset, false);
         
         Texture2D mapTexture = Texture2D.whiteTexture;
 
         switch (TypeOfMap)
         {
             case MapType.HeightMap:
-                mapTexture = TextureGenerator.TextureFromHeightMap(noiseMap, FilterMode);
-                display.DrawTexture(mapTexture, FilterMode);
+                mapTexture = TextureGenerator.TextureFromHeightMap(noiseMap);
+                display.DrawTexture(mapTexture);
                 break;
             case MapType.ColorMap:
-                mapTexture = TextureGenerator.TextureFromColorMap(MapWidth, MapHeight, GenereateColorMap(noiseMap), FilterMode);
-                display.DrawTexture(mapTexture, FilterMode);
+                mapTexture = TextureGenerator.TextureFromColorMap(MapWidth, MapHeight, GenereateColorMap(noiseMap));
+                display.DrawTexture(mapTexture);
                 break;
             case MapType.MeshMap:
-                mapTexture = Settings.isMeshColored ? TextureGenerator.TextureFromColorMap(MapWidth, MapHeight, GenereateColorMap(noiseMap), FilterMode) : TextureGenerator.TextureFromHeightMap(noiseMap, FilterMode);
+                mapTexture = Settings.isMeshColored ? TextureGenerator.TextureFromColorMap(MapWidth, MapHeight, GenereateColorMap(noiseMap)) : TextureGenerator.TextureFromHeightMap(noiseMap);
                 display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap, Settings.MesAnimationCurve , Settings.MeshMultipler, 0), mapTexture);
                 break;
         }
@@ -78,9 +78,12 @@ public class MapGenerator : MonoBehaviour
             {
                 for (int i = 0; i < TerrainTypes.Length; i++)
                 {
-                    if (heightMap[x, y] <= TerrainTypes[i].Height)
+                    if (heightMap[x, y] >= TerrainTypes[i].Height)
                     {
                         colorMap[y * MapWidth + x] = TerrainTypes[i].Color;
+                    }
+                    else
+                    {
                         break;
                     }
                 }
