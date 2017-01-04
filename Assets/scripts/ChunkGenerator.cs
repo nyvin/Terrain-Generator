@@ -5,43 +5,42 @@ using System.Threading;
 using System.Collections.Generic;
 using System.Linq;
 
-public class ChunkGenerator : MonoBehaviour
+public class ChunkGenerator : Generators
 {
-
-    public enum MapType
-    {
-        HeightMap,
-        ColorMap,
-        MeshMap
-    };
-
     public const int chunkSize = 241;
 
-    public MapType TypeOfMap;
-    public SettingsOfGenerator Settings;
     [Range(0, 6)] public int editorPreviewLOD;
-    public Terrain[] TerrainTypes;
-    public MapDisplay display;
 
     Queue<ChunkThreadInfo<ChunkData>> chunkDataThreadInfoQueue = new Queue<ChunkThreadInfo<ChunkData>>();
     Queue<ChunkThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<ChunkThreadInfo<MeshData>>();
-    public void DrawMapInEditor()
+
+    private void Awake()
+    {
+        MapWidth = chunkSize;
+        MapHeight = chunkSize;
+    }
+
+    public override void DrawMapInEditor()
     {
         ChunkData chunkData = GenerateChunkData(Vector2.zero);
         Texture2D mapTexture = Texture2D.whiteTexture;
-        switch (TypeOfMap)
+        switch (settings.TypeOfMap)
         {
-            case MapType.HeightMap:
+            case SettingsToGenerators.MapType.HeightMap:
                 mapTexture = TextureGenerator.TextureFromHeightMap(chunkData.heightMap);
                 display.DrawTexture(mapTexture);
                 break;
-            case MapType.ColorMap:
+            case SettingsToGenerators.MapType.ColorMap:
                 mapTexture = TextureGenerator.TextureFromColorMap(chunkSize, chunkSize, chunkData.colorMap);
                 display.DrawTexture(mapTexture);
                 break;
-            case MapType.MeshMap:
-                mapTexture = Settings.isMeshColored? TextureGenerator.TextureFromColorMap(chunkSize, chunkSize, chunkData.colorMap) : TextureGenerator.TextureFromHeightMap(chunkData.heightMap);
-                display.DrawMesh( MeshGenerator.GenerateTerrainMesh(chunkData.heightMap, Settings.MesAnimationCurve, Settings.MeshMultipler, editorPreviewLOD), mapTexture);
+            case SettingsToGenerators.MapType.MeshMap:
+                mapTexture = settings.isMeshColored? TextureGenerator.TextureFromColorMap(chunkSize, chunkSize, chunkData.colorMap) : TextureGenerator.TextureFromHeightMap(chunkData.heightMap);
+                display.DrawMesh( MeshGenerator.GenerateTerrainMesh(chunkData.heightMap, settings.MesAnimationCurve, settings.MeshMultipler, editorPreviewLOD), mapTexture);
+                break;
+            case SettingsToGenerators.MapType.FalloffMap:
+                mapTexture = TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(chunkSize, chunkSize, settings.falloffParamA, settings.falloffParamB));
+                display.DrawTexture(mapTexture);
                 break;
          }
     }
@@ -75,14 +74,12 @@ public class ChunkGenerator : MonoBehaviour
 
     void MeshDataThread(ChunkData chunkData, int lod, Action<MeshData> callback)
     {
-        MeshData meshData = MeshGenerator.GenerateTerrainMesh(chunkData.heightMap, Settings.MesAnimationCurve, Settings.MeshMultipler, lod);
+        MeshData meshData = MeshGenerator.GenerateTerrainMesh(chunkData.heightMap, settings.MesAnimationCurve, settings.MeshMultipler, lod);
         lock (meshDataThreadInfoQueue)
         {
             meshDataThreadInfoQueue.Enqueue(new ChunkThreadInfo<MeshData>(callback, meshData));
         }
     }
-
-
 
     void Update()
     {
@@ -108,26 +105,10 @@ public class ChunkGenerator : MonoBehaviour
 
     private ChunkData GenerateChunkData(Vector2 center)
     {
-        float[,] noiseMap = Noise.GenerateNoiseMap(chunkSize, chunkSize, Settings.minHeight, Settings.maxHeight, Settings.Seed, Settings.NoiseScale, Settings.Octaves, Settings.Persistance, Settings.Lacunarity, Settings.Offset + center, true);
+        float[,] noiseMap = getNoiseMap(center);
         Color[] colorMap = GenereateColorMap(noiseMap);
 
         return new ChunkData(noiseMap, colorMap);
-    }
-
-    void OnValidate()
-    {
-        if (Settings.NoiseScale < 0)
-        {
-            Settings.NoiseScale = 0;
-        }
-        if (Settings.Lacunarity < 1)
-        {
-            Settings.Lacunarity = 1;
-        }
-        if (Settings.Octaves < 0)
-        {
-            Settings.Octaves = 0;
-        }
     }
 
     public Color[] GenereateColorMap(float[,] heightMap)
@@ -138,11 +119,11 @@ public class ChunkGenerator : MonoBehaviour
         {
             for (int x = 0; x < chunkSize; x++)
             {
-                for (int i = 0; i < TerrainTypes.Length; i++)
+                for (int i = 0; i < settings.TerrainTypes.Length; i++)
                 {
-                    if (heightMap[x, y] >= TerrainTypes[i].Height)
+                    if (heightMap[x, y] >= settings.TerrainTypes[i].Height)
                     {
-                        colorMap[y * chunkSize + x] = TerrainTypes[i].Color;
+                        colorMap[y * chunkSize + x] = settings.TerrainTypes[i].Color;
                     }
                     else
                     {

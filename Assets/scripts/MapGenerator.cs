@@ -4,67 +4,32 @@ using System.Collections;
 using JetBrains.Annotations;
 using UnityEditorInternal;
 
-public class MapGenerator : MonoBehaviour
+public class MapGenerator : Generators
 {
-    public enum MapType
+    public override void DrawMapInEditor()
     {
-        HeightMap,
-        ColorMap,
-        MeshMap
-    };
-
-    public int MapWidth;
-    public int MapHeight;
-
-    public MapType TypeOfMap;
-    public SettingsOfGenerator Settings;
-    public bool FilterMode;
-    public Terrain[] TerrainTypes;
-    public MapDisplay display;
-    public void GenerateMap()
-    {
-        float[,] noiseMap = Noise.GenerateNoiseMap(MapWidth, MapHeight, Settings.minHeight, Settings.maxHeight, Settings.Seed, Settings.NoiseScale, Settings.Octaves, Settings.Persistance, Settings.Lacunarity, Settings.Offset, false);
+        float[,] noiseMap = getNoiseMap(Vector2.zero);
         
         Texture2D mapTexture = Texture2D.whiteTexture;
 
-        switch (TypeOfMap)
+        switch (settings.TypeOfMap)
         {
-            case MapType.HeightMap:
+            case SettingsToGenerators.MapType.HeightMap:
                 mapTexture = TextureGenerator.TextureFromHeightMap(noiseMap);
                 display.DrawTexture(mapTexture);
                 break;
-            case MapType.ColorMap:
+            case SettingsToGenerators.MapType.ColorMap:
                 mapTexture = TextureGenerator.TextureFromColorMap(MapWidth, MapHeight, GenereateColorMap(noiseMap));
                 display.DrawTexture(mapTexture);
                 break;
-            case MapType.MeshMap:
-                mapTexture = Settings.isMeshColored ? TextureGenerator.TextureFromColorMap(MapWidth, MapHeight, GenereateColorMap(noiseMap)) : TextureGenerator.TextureFromHeightMap(noiseMap);
-                display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap, Settings.MesAnimationCurve , Settings.MeshMultipler, 0), mapTexture);
+            case SettingsToGenerators.MapType.MeshMap:
+                mapTexture = settings.isMeshColored ? TextureGenerator.TextureFromColorMap(MapWidth, MapHeight, GenereateColorMap(noiseMap)) : TextureGenerator.TextureFromHeightMap(noiseMap);
+                display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap, settings.MesAnimationCurve , settings.MeshMultipler, 0), mapTexture);
                 break;
-        }
-    }
-
-    void OnValidate()
-    {
-        if (MapWidth < 1)
-        {
-            MapWidth = 1;
-        }
-        if (MapHeight < 1)
-        {
-            MapHeight = 1;
-        }
-        if (Settings.NoiseScale < 0)
-        {
-            Settings.NoiseScale = 0;
-        }
-        if (Settings.Lacunarity < 1)
-        {
-            Settings.Lacunarity = 1;
-        }
-        if (Settings.Octaves < 0)
-        {
-            Settings.Octaves = 0;
+            case SettingsToGenerators.MapType.FalloffMap:
+                mapTexture = TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(MapWidth, MapHeight, settings.falloffParamA, settings.falloffParamB));
+                display.DrawTexture(mapTexture);
+                break;
         }
     }
 
@@ -76,11 +41,11 @@ public class MapGenerator : MonoBehaviour
         {
             for (int x = 0; x < MapWidth; x++)
             {
-                for (int i = 0; i < TerrainTypes.Length; i++)
+                for (int i = 0; i < settings.TerrainTypes.Length; i++)
                 {
-                    if (heightMap[x, y] >= TerrainTypes[i].Height)
+                    if (heightMap[x, y] >= settings.TerrainTypes[i].Height)
                     {
-                        colorMap[y * MapWidth + x] = TerrainTypes[i].Color;
+                        colorMap[y * MapWidth + x] = settings.TerrainTypes[i].Color;
                     }
                     else
                     {
@@ -93,37 +58,5 @@ public class MapGenerator : MonoBehaviour
         return colorMap;
     }
 
-}
-
-[System.Serializable]
-public struct SettingsOfGenerator
-{
-    [Range(0, 1)]
-    public float minHeight;
-    [Range(0, 1)]
-    public float maxHeight;
-
-    public float NoiseScale;
-    [Range(1, 10)]
-    public int Octaves;
-    [Range(0, 1)]
-    public float Persistance;
-    public float Lacunarity;
-
-    public int Seed;
-    public Vector2 Offset;
-
-    public float MeshMultipler;
-    public AnimationCurve MesAnimationCurve;
-    public bool isMeshColored;
-    public bool AutoUpdate;
-}
-
-[System.Serializable]
-public struct Terrain
-{
-    public string Name;
-    public float Height;
-    public Color Color;
 }
 
