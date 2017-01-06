@@ -7,18 +7,20 @@ using System.Linq;
 
 public class ChunkGenerator : Generators
 {
-    public const int chunkSize = 241;
+    public ChunkDisplay display;
+
+    public const int chunkSize = 239;
+
+    public override Size getSize()
+    {
+        return new Size(chunkSize, chunkSize);
+    }
 
     [Range(0, 6)] public int editorPreviewLOD;
 
     Queue<ChunkThreadInfo<ChunkData>> chunkDataThreadInfoQueue = new Queue<ChunkThreadInfo<ChunkData>>();
-    Queue<ChunkThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<ChunkThreadInfo<MeshData>>();
+    Queue<ChunkThreadInfo<ChunkMeshData>> meshDataThreadInfoQueue = new Queue<ChunkThreadInfo<ChunkMeshData>>();
 
-    private void Awake()
-    {
-        MapWidth = chunkSize;
-        MapHeight = chunkSize;
-    }
 
     public override void DrawMapInEditor()
     {
@@ -36,7 +38,7 @@ public class ChunkGenerator : Generators
                 break;
             case SettingsToGenerators.MapType.MeshMap:
                 mapTexture = settings.isMeshColored? TextureGenerator.TextureFromColorMap(chunkSize, chunkSize, chunkData.colorMap) : TextureGenerator.TextureFromHeightMap(chunkData.heightMap);
-                display.DrawMesh( MeshGenerator.GenerateTerrainMesh(chunkData.heightMap, settings.MesAnimationCurve, settings.MeshMultipler, editorPreviewLOD), mapTexture);
+                display.DrawMesh( ChunkMeshGenerator.GenerateTerrainMesh(chunkData.heightMap, settings.MeshMultipler, settings.MesAnimationCurve, editorPreviewLOD), mapTexture);
                 break;
             case SettingsToGenerators.MapType.FalloffMap:
                 mapTexture = TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(chunkSize, chunkSize, settings.falloffParamA, settings.falloffParamB));
@@ -64,7 +66,7 @@ public class ChunkGenerator : Generators
         }
     }
 
-    public void RequestMeshData(ChunkData chunkData, int lod, Action<MeshData> callback)
+    public void RequestMeshData(ChunkData chunkData, int lod, Action<ChunkMeshData> callback)
     {
         ThreadStart threadStart = delegate {
             MeshDataThread(chunkData, lod, callback);
@@ -72,12 +74,12 @@ public class ChunkGenerator : Generators
         new Thread(threadStart).Start();
     }
 
-    void MeshDataThread(ChunkData chunkData, int lod, Action<MeshData> callback)
+    void MeshDataThread(ChunkData chunkData, int lod, Action<ChunkMeshData> callback)
     {
-        MeshData meshData = MeshGenerator.GenerateTerrainMesh(chunkData.heightMap, settings.MesAnimationCurve, settings.MeshMultipler, lod);
+        ChunkMeshData meshData = ChunkMeshGenerator.GenerateTerrainMesh(chunkData.heightMap, settings.MeshMultipler, settings.MesAnimationCurve, lod);
         lock (meshDataThreadInfoQueue)
         {
-            meshDataThreadInfoQueue.Enqueue(new ChunkThreadInfo<MeshData>(callback, meshData));
+            meshDataThreadInfoQueue.Enqueue(new ChunkThreadInfo<ChunkMeshData>(callback, meshData));
         }
     }
 
@@ -96,7 +98,7 @@ public class ChunkGenerator : Generators
         {
             for (int i = 0; i < meshDataThreadInfoQueue.Count; i++)
             {
-                ChunkThreadInfo<MeshData> threadInfo = meshDataThreadInfoQueue.Dequeue();
+                ChunkThreadInfo<ChunkMeshData> threadInfo = meshDataThreadInfoQueue.Dequeue();
                 threadInfo.callback(threadInfo.parameter);
             }
         }
@@ -105,7 +107,7 @@ public class ChunkGenerator : Generators
 
     private ChunkData GenerateChunkData(Vector2 center)
     {
-        float[,] noiseMap = getNoiseMap(center);
+        float[,] noiseMap = getNoiseMap(chunkSize + 2, chunkSize + 2, center);
         Color[] colorMap = GenereateColorMap(noiseMap);
 
         return new ChunkData(noiseMap, colorMap);

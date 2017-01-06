@@ -69,6 +69,9 @@ public class SettingsToGenerators : MonoBehaviour
         {
             Octaves = 0;
         }
-        generator.falloffMap = FalloffGenerator.GenerateFalloffMap(generator.MapWidth, generator.MapHeight, falloffParamA, falloffParamB);
+        if(isFalloff)
+        {
+            generator.falloffMap = FalloffGenerator.GenerateFalloffMap(generator.getSize().width, generator.getSize().height, falloffParamA, falloffParamB);
+        }
     }
 };

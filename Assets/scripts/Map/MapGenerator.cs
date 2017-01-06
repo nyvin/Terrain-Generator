@@ -6,9 +6,19 @@ using UnityEditorInternal;
 
 public class MapGenerator : Generators
 {
+    public int mapWidth;
+    public int mapHeight;
+
+    public MapDisplay display;
+
+    public override Size getSize()
+    {
+        return new Size(mapWidth, mapHeight);
+    }
+
     public override void DrawMapInEditor()
     {
-        float[,] noiseMap = getNoiseMap(Vector2.zero);
+        float[,] noiseMap = getNoiseMap(mapWidth, mapHeight, Vector2.zero);
         
         Texture2D mapTexture = Texture2D.whiteTexture;
 
@@ -19,15 +29,15 @@ public class MapGenerator : Generators
                 display.DrawTexture(mapTexture);
                 break;
             case SettingsToGenerators.MapType.ColorMap:
-                mapTexture = TextureGenerator.TextureFromColorMap(MapWidth, MapHeight, GenereateColorMap(noiseMap));
+                mapTexture = TextureGenerator.TextureFromColorMap(mapWidth, mapHeight, GenereateColorMap(noiseMap));
                 display.DrawTexture(mapTexture);
                 break;
             case SettingsToGenerators.MapType.MeshMap:
-                mapTexture = settings.isMeshColored ? TextureGenerator.TextureFromColorMap(MapWidth, MapHeight, GenereateColorMap(noiseMap)) : TextureGenerator.TextureFromHeightMap(noiseMap);
-                display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap, settings.MesAnimationCurve , settings.MeshMultipler, 0), mapTexture);
+                mapTexture = settings.isMeshColored ? TextureGenerator.TextureFromColorMap(mapWidth, mapHeight, GenereateColorMap(noiseMap)) : TextureGenerator.TextureFromHeightMap(noiseMap);
+                display.DrawMesh(MapMeshGenerator.GenerateTerrainMesh(noiseMap, settings.MesAnimationCurve , settings.MeshMultipler, 0), mapTexture);
                 break;
             case SettingsToGenerators.MapType.FalloffMap:
-                mapTexture = TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(MapWidth, MapHeight, settings.falloffParamA, settings.falloffParamB));
+                mapTexture = TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(mapWidth, mapHeight, settings.falloffParamA, settings.falloffParamB));
                 display.DrawTexture(mapTexture);
                 break;
         }
@@ -35,17 +45,17 @@ public class MapGenerator : Generators
 
     public Color[] GenereateColorMap(float[,] heightMap)
     {
-        Color[] colorMap = new Color[MapWidth * MapHeight];
+        Color[] colorMap = new Color[mapWidth * mapHeight];
 
-        for (int y = 0; y < MapHeight; y++)
+        for (int y = 0; y < mapHeight; y++)
         {
-            for (int x = 0; x < MapWidth; x++)
+            for (int x = 0; x < mapWidth; x++)
             {
                 for (int i = 0; i < settings.TerrainTypes.Length; i++)
                 {
                     if (heightMap[x, y] >= settings.TerrainTypes[i].Height)
                     {
-                        colorMap[y * MapWidth + x] = settings.TerrainTypes[i].Color;
+                        colorMap[y * mapWidth + x] = settings.TerrainTypes[i].Color;
                     }
                     else
                     {

@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public static class MeshGenerator {
+public static class MapMeshGenerator
+{
     public static MeshData GenerateTerrainMesh(float[,] heightMap, AnimationCurve _heightCurve, float meshMultipler, int levelOfDetail)
     {
         AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);

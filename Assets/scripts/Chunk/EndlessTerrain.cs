@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class EndlessTerrain : MonoBehaviour
 {
-    const float scale = 1f;
+    const float scale = 5f;
 
     private const float viewerMoveTresholdForChunkUpdate = 25f;
 
@@ -198,9 +198,9 @@ public class EndlessTerrain : MonoBehaviour
             this.updateCallback = updateCallback;
         }
 
-        void OnMeshDataRecieved(MeshData meshData)
+        void OnMeshDataRecieved(ChunkMeshData meshData)
         {
-            mesh = meshData.CretaeMesh();
+            mesh = meshData.CreateMesh();
             hasMesh = true;
 
             updateCallback();
