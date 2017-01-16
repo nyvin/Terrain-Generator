@@ -6,6 +6,8 @@ using UnityEditorInternal;
 
 public class MapGenerator : Generators
 {
+    public bool isCollider = true;
+
     public int mapWidth;
     public int mapHeight;
 
@@ -14,6 +16,11 @@ public class MapGenerator : Generators
     public override Size getSize()
     {
         return new Size(mapWidth, mapHeight);
+    }
+
+    private void Awake()
+    {
+        DrawMapInEditor();
     }
 
     public override void DrawMapInEditor()
@@ -34,7 +41,7 @@ public class MapGenerator : Generators
                 break;
             case SettingsToGenerators.MapType.MeshMap:
                 mapTexture = settings.isMeshColored ? TextureGenerator.TextureFromColorMap(mapWidth, mapHeight, GenereateColorMap(noiseMap)) : TextureGenerator.TextureFromHeightMap(noiseMap);
-                display.DrawMesh(MapMeshGenerator.GenerateTerrainMesh(noiseMap, settings.MesAnimationCurve , settings.MeshMultipler, 0), mapTexture);
+                display.DrawMesh(MapMeshGenerator.GenerateTerrainMesh(noiseMap, settings.MesAnimationCurve , settings.MeshMultipler, 0, settings.useFlatShading), mapTexture, isCollider);
                 break;
             case SettingsToGenerators.MapType.FalloffMap:
                 mapTexture = TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(mapWidth, mapHeight, settings.falloffParamA, settings.falloffParamB));

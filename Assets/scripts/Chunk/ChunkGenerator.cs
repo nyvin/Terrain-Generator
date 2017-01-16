@@ -7,9 +7,28 @@ using System.Linq;
 
 public class ChunkGenerator : Generators
 {
+    static ChunkGenerator instance;
+
     public ChunkDisplay display;
 
-    public const int chunkSize = 239;
+    public static int chunkSize
+    {
+        get
+        {
+            if(instance == null)
+            {
+                instance = FindObjectOfType<ChunkGenerator>();
+            }
+            if (instance.settings.useFlatShading)
+            {
+                return 95;
+            }
+            else
+            {
+                return 239;
+            }
+        }
+    }
 
     public override Size getSize()
     {
@@ -20,7 +39,6 @@ public class ChunkGenerator : Generators
 
     Queue<ChunkThreadInfo<ChunkData>> chunkDataThreadInfoQueue = new Queue<ChunkThreadInfo<ChunkData>>();
     Queue<ChunkThreadInfo<ChunkMeshData>> meshDataThreadInfoQueue = new Queue<ChunkThreadInfo<ChunkMeshData>>();
-
 
     public override void DrawMapInEditor()
     {
@@ -38,7 +56,7 @@ public class ChunkGenerator : Generators
                 break;
             case SettingsToGenerators.MapType.MeshMap:
                 mapTexture = settings.isMeshColored? TextureGenerator.TextureFromColorMap(chunkSize, chunkSize, chunkData.colorMap) : TextureGenerator.TextureFromHeightMap(chunkData.heightMap);
-                display.DrawMesh( ChunkMeshGenerator.GenerateTerrainMesh(chunkData.heightMap, settings.MeshMultipler, settings.MesAnimationCurve, editorPreviewLOD), mapTexture);
+                display.DrawMesh( ChunkMeshGenerator.GenerateTerrainMesh(chunkData.heightMap, settings.MeshMultipler, settings.MesAnimationCurve, editorPreviewLOD, settings.useFlatShading), mapTexture);
                 break;
             case SettingsToGenerators.MapType.FalloffMap:
                 mapTexture = TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(chunkSize, chunkSize, settings.falloffParamA, settings.falloffParamB));
@@ -76,7 +94,7 @@ public class ChunkGenerator : Generators
 
     void MeshDataThread(ChunkData chunkData, int lod, Action<ChunkMeshData> callback)
     {
-        ChunkMeshData meshData = ChunkMeshGenerator.GenerateTerrainMesh(chunkData.heightMap, settings.MeshMultipler, settings.MesAnimationCurve, lod);
+        ChunkMeshData meshData = ChunkMeshGenerator.GenerateTerrainMesh(chunkData.heightMap, settings.MeshMultipler, settings.MesAnimationCurve, lod, settings.useFlatShading);
         lock (meshDataThreadInfoQueue)
         {
             meshDataThreadInfoQueue.Enqueue(new ChunkThreadInfo<ChunkMeshData>(callback, meshData));

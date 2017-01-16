@@ -4,19 +4,25 @@ using System.Collections;
 public class MapDisplay : MonoBehaviour
 {
 
-    public Renderer TextureRenderer;
-    public MeshFilter MeshFilter;
-    public MeshRenderer MeshRenderer;
+    public Renderer textureRenderer;
+    public MeshFilter meshFilter;
+    public MeshRenderer meshRenderer;
+    public MeshCollider meshCollider;
 
     public void DrawTexture(Texture2D texture)
     {
-        TextureRenderer.sharedMaterial.mainTexture = texture;
-        TextureRenderer.transform.localScale = new Vector3(texture.width, 1, texture.height);
+        textureRenderer.sharedMaterial.mainTexture = texture;
+        textureRenderer.transform.localScale = new Vector3(texture.width, 1, texture.height);
     }
 
-    public void DrawMesh(MeshData dataOfMesh, Texture2D texture)
+    public void DrawMesh(MeshData dataOfMesh, Texture2D texture, bool isCollider)
     {
-        MeshFilter.sharedMesh = dataOfMesh.CretaeMesh();
-        MeshRenderer.sharedMaterial.mainTexture = texture;
+        Mesh mesh = dataOfMesh.CretaeMesh();
+        meshFilter.sharedMesh = mesh;
+        meshRenderer.sharedMaterial.mainTexture = texture;
+        if(isCollider)
+        {
+            meshCollider.sharedMesh = mesh;
+        }
     }
 }

@@ -40,6 +40,7 @@ public class SettingsToGenerators : MonoBehaviour
     public float falloffParamB;
 
     public bool isMeshColored;
+    public bool useFlatShading;
     public bool AutoUpdate;
 
     public bool isChunk;
